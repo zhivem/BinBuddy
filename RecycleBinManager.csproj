@@ -1,0 +1,54 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>True</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>14.0</LangVersion>
+
+		<!-- Публикация одним файлом -->
+		<PublishSingleFile>true</PublishSingleFile>
+		<SelfContained>true</SelfContained>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+		<!-- ОТКЛЮЧАЕМ обрезку для Windows Forms -->
+		<PublishTrimmed>false</PublishTrimmed>
+		<TrimMode>copyused</TrimMode>
+
+		<!-- Включаем ReadyToRun для производительности -->
+		<PublishReadyToRun>true</PublishReadyToRun>
+
+		<!-- Оптимизация размера без обрезки -->
+		<DebugType>embedded</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+		<Optimize>true</Optimize>
+		<TieredCompilation>true</TieredCompilation>
+
+		<!-- Убираем лишние локализации -->
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
+
+		<!-- Подавляем предупреждение об обрезке -->
+		<NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
+		<SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+		<ApplicationIcon>1485477104-basket_78591.ico</ApplicationIcon>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="NotifyIconEx" Version="1.1.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="icons\**\*.ico">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="1485477104-basket_78591.ico" />
+	</ItemGroup>
+
+</Project>
