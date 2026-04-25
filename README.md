@@ -1,9 +1,9 @@
-#  <img src="https://github.com/zhivem/RecycleBinManagerC/blob/main/RecycleBinManager/RecycleBinManager.ico" width="4%" height="4%"> RecycleBinManager by [Zhivem] на C#
+#  <img src="https://github.com/zhivem/RecycleBinManagerC/blob/main/RecycleBinManager/RecycleBinManager.ico" width="4%" height="4%"> BinBuddy by [Zhivem]
 
 ## Скриншоты 
 
-![image](https://github.com/user-attachments/assets/71989388-f1d4-4e1b-b356-7f1ba10f8df1)
-![image](https://github.com/user-attachments/assets/63d9c545-de2a-4c24-8ef4-e7a7fc5ae468)
+<img width="202" height="148" alt="image" src="https://github.com/user-attachments/assets/085e4b56-cd56-4c77-adc6-88571b24472a" />
+<img width="478" height="165" alt="image" src="https://github.com/user-attachments/assets/a7ae64cd-374e-4abb-b828-dcb42ab6d3de" />
 
 ## Информация
 
