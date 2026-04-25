@@ -1,4 +1,4 @@
-#  <img src="https://github.com/zhivem/RecycleBinManagerC/blob/main/RecycleBinManager/RecycleBinManager.ico" width="4%" height="4%"> BinBuddy by [Zhivem]
+#  <img src="https://raw.githubusercontent.com/zhivem/BinBuddy/refs/heads/main/src/BinBuddy/app.ico" width="4%" height="4%"> BinBuddy by [Zhivem]
 
 ## Скриншоты 
 
