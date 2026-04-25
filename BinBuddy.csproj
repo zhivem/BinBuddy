@@ -8,47 +8,55 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>14.0</LangVersion>
 
-		<!-- Публикация одним файлом -->
 		<PublishSingleFile>true</PublishSingleFile>
 		<SelfContained>true</SelfContained>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
-		<!-- ОТКЛЮЧАЕМ обрезку для Windows Forms -->
 		<PublishTrimmed>false</PublishTrimmed>
 		<TrimMode>copyused</TrimMode>
 
-		<!-- Включаем ReadyToRun для производительности -->
 		<PublishReadyToRun>true</PublishReadyToRun>
 
-		<!-- Оптимизация размера без обрезки -->
 		<DebugType>embedded</DebugType>
 		<DebugSymbols>false</DebugSymbols>
 		<Optimize>true</Optimize>
 		<TieredCompilation>true</TieredCompilation>
 
-		<!-- Убираем лишние локализации -->
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<SatelliteResourceLanguages>ru</SatelliteResourceLanguages>
 
-		<!-- Подавляем предупреждение об обрезке -->
 		<NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
 		<SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
-		<ApplicationIcon>1485477104-basket_78591.ico</ApplicationIcon>
+		<ApplicationIcon>src\BinBuddy\app.ico</ApplicationIcon>
+		<Version>1.3</Version>
+		<AssemblyName>BinBuddy</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="NotifyIconEx" Version="1.1.2" />
+		<PackageReference Include="NativeTray" Version="2.0.3" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Content Include="icons\**\*.ico">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-		</Content>
-	</ItemGroup>
+	<!-- Копируем иконки из resources/icons в папку icons при сборке -->
+	<Target Name="CopyIconsToOutput" BeforeTargets="BeforeBuild">
+		<ItemGroup>
+			<IconFiles Include="resources\icons\**\*.ico" />
+		</ItemGroup>
+		<Copy SourceFiles="@(IconFiles)"
+              DestinationFiles="@(IconFiles->'$(OutputPath)icons\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+	</Target>
+
+	<Target Name="CopyIconsToPublish" BeforeTargets="Publish">
+		<ItemGroup>
+			<IconFiles Include="resources\icons\**\*.ico" />
+		</ItemGroup>
+		<Copy SourceFiles="@(IconFiles)"
+              DestinationFiles="@(IconFiles->'$(PublishDir)icons\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" />
+	</Target>
 
 	<ItemGroup>
-	  <Content Include="1485477104-basket_78591.ico" />
+		<Content Include="src\BinBuddy\app.ico" />
 	</ItemGroup>
 
 </Project>
