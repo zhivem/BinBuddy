@@ -1,40 +1,57 @@
-# Папки сборки
-bin/
-obj/
-publish/
-
-# Visual Studio
-.vs/
-.vscode/
-.idea/
-
-# Файлы пользователя
-*.csproj.user
-*.suo
-*.userprefs
-*.user
-
-# Временные файлы
-*.tmp
-*.bak
-*.log
-*.cache
-
-# Файлы сборки
-*.dll
+```
+# Build artifacts and binaries
 *.exe
+*.dll
 *.pdb
 *.exe.config
+*.userprefs
+*.userosscache
+*.suo
+*.user
+*.aps
+*.ncb
+*.obj
+*.log
+*.ilk
+*.iobj
+*.ipdb
+*.tlog
+*.res
+*.pch
+*.manifest
+*.dep
+*.cache
+*.dotsettings.user
+*.VC.db
+*.VC.VC.opendb
 
-# Профили публикации
-Properties/PublishProfiles/
-**/Properties/PublishProfiles/
-*.pubxml
-*.pubxml.user
+# Dependency directories
+packages/
+bin/
+obj/
+out/
 
-# Rider
-.idea/
-*.sln.iml
+# Configuration
+*.userprefs
+.vs/
+*.userosscache
+*.suo
+*.user
+*.VC.VC.opendb
 
-# Если BinBuddy.slnx - временный файл
-*.slnx
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
+Icon?
+```

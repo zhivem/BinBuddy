@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.NativeTray;
-using System.Runtime.InteropServices;
+using BinBuddy.src.BinBuddy.Services;
 
 namespace BinBuddy.src.BinBuddy
 {
@@ -10,6 +10,14 @@ namespace BinBuddy.src.BinBuddy
         private static AppSettings _settings = null!;
         private static System.Windows.Forms.Timer? _timer;
         private static bool _previousRecycleBinState;
+        
+        // Services
+        private static SettingsService _settingsService = null!;
+        private static RecycleBinService _recycleBinService = null!;
+        private static IconPackService _iconPackService = null!;
+        private static UpdateCheckService _updateCheckService = null!;
+        private static AutoStartService _autoStartService = null!;
+        private static RecycleBinVisibilityService _recycleBinVisibilityService = null!;
 
         [STAThread]
         public static void Main()
@@ -17,8 +25,16 @@ namespace BinBuddy.src.BinBuddy
             ApplicationConfiguration.Initialize();
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
-            _settings = SettingsManager.LoadSettings();
-            _previousRecycleBinState = IsRecycleBinEmpty();
+            // Initialize services
+            _settingsService = new SettingsService();
+            _recycleBinService = new RecycleBinService();
+            _iconPackService = new IconPackService(_settingsService);
+            _updateCheckService = new UpdateCheckService();
+            _autoStartService = new AutoStartService();
+            _recycleBinVisibilityService = new RecycleBinVisibilityService();
+
+            _settings = _settingsService.LoadSettings();
+            _previousRecycleBinState = _recycleBinService.IsEmpty();
 
             InitializeTrayIcon();
             InitializeTimer();
@@ -51,11 +67,11 @@ namespace BinBuddy.src.BinBuddy
 
         private static void ApplyInitialSettings()
         {
-            var currentPack = IconPackManager.LoadCurrentPack();
-            IconPackManager.ApplyIconPack(currentPack, _trayIcon!);
+            var currentPack = _iconPackService.LoadCurrentPack();
+            _iconPackService.ApplyIconPack(currentPack, _trayIcon!);
 
             if (!_settings.ShowRecycleBinOnDesktop)
-                RecycleBinVisibilityManager.HideRecycleBin();
+                _recycleBinVisibilityService.Hide();
         }
 
         private static IntPtr LoadTrayIcon()
@@ -128,17 +144,17 @@ namespace BinBuddy.src.BinBuddy
         }
 
         private static TrayMenu CreateSettingsSubmenu()
-            {
-                return new TrayMenu
         {
-            CreateCheckedMenuItem("Показывать уведомления", _settings.ShowNotifications, ToggleNotifications),
-            CreateCheckedMenuItem("Автозапуск", AutoStartManager.IsEnabled(), ToggleAutoStart),
-            CreateCheckedMenuItem("Отображать 🗑️ на рабочем столе", _settings.ShowRecycleBinOnDesktop, ToggleRecycleBinVisibility),
-            new TraySeparator(),
-            CreateMenuItem("Таймер обновления", null, CreateUpdateIntervalSubmenu()),
-            CreateMenuItem("Выбрать иконку", null, CreateIconPackSubmenu())
-        };
-            }
+            return new TrayMenu
+            {
+                CreateCheckedMenuItem("Показывать уведомления", _settings.ShowNotifications, ToggleNotifications),
+                CreateCheckedMenuItem("Автозапуск", _autoStartService.IsEnabled(), ToggleAutoStart),
+                CreateCheckedMenuItem("Отображать 🗑️ на рабочем столе", _settings.ShowRecycleBinOnDesktop, ToggleRecycleBinVisibility),
+                new TraySeparator(),
+                CreateMenuItem("Таймер обновления", null, CreateUpdateIntervalSubmenu()),
+                CreateMenuItem("Выбрать иконку", null, CreateIconPackSubmenu())
+            };
+        }
 
         private static TrayMenuItem CreateCheckedMenuItem(string header, bool isChecked, Action<object?> command)
         {
@@ -172,7 +188,7 @@ namespace BinBuddy.src.BinBuddy
         private static void SetUpdateInterval(int interval, TrayMenu subMenu)
         {
             _settings.UpdateIntervalSeconds = interval;
-            SettingsManager.SaveSettings(_settings);
+            _settingsService.SaveSettings(_settings);
 
             foreach (var item in subMenu.OfType<TrayMenuItem>())
                 item.IsChecked = item.Header == $"{interval} секунд";
@@ -199,7 +215,7 @@ namespace BinBuddy.src.BinBuddy
                 .Where(name => !string.IsNullOrEmpty(name))
                 .ToArray();
 
-            string currentPack = IconPackManager.LoadCurrentPack();
+            string currentPack = _iconPackService.LoadCurrentPack();
 
             if (iconPacks.Length == 0)
             {
@@ -226,9 +242,9 @@ namespace BinBuddy.src.BinBuddy
         {
             if (_trayIcon == null) return;
 
-            IconPackManager.ApplyIconPack(packName, _trayIcon);
-            bool isRecycleBinEmpty = IsRecycleBinEmpty();
-            IconPackManager.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
+            _iconPackService.ApplyIconPack(packName, _trayIcon);
+            bool isRecycleBinEmpty = _recycleBinService.IsEmpty();
+            _iconPackService.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
 
             foreach (var item in subMenu.OfType<TrayMenuItem>())
                 item.IsChecked = item.Header == packName;
@@ -270,9 +286,9 @@ namespace BinBuddy.src.BinBuddy
         {
             try
             {
-                bool hasUpdate = await UpdateChecker.IsUpdateAvailableAsync();
+                bool hasUpdate = await _updateCheckService.IsUpdateAvailableAsync();
                 string currentVersion = GetVersion();
-                string? latestVersion = UpdateChecker.GetLatestVersion();
+                string? latestVersion = _updateCheckService.GetLatestVersion();
 
                 if (_trayIcon?.Menu is TrayMenu menu && menu[0] is TrayMenuItem versionItem)
                 {
@@ -280,7 +296,7 @@ namespace BinBuddy.src.BinBuddy
                     {
                         versionItem.Header = $"Версия {latestVersion} доступна! (нажмите для загрузки)";
                         versionItem.IsEnabled = true;
-                        versionItem.Command = new TrayCommand(_ => UpdateChecker.OpenReleasesPage());
+                        versionItem.Command = new TrayCommand(_ => _updateCheckService.OpenReleasesPage());
 
                         ShowNotification("Доступно обновление!", $"Версия {latestVersion} уже доступна для скачивания.", 5000);
                     }
@@ -305,7 +321,7 @@ namespace BinBuddy.src.BinBuddy
         private static void ToggleNotifications(object? _)
         {
             _settings.ShowNotifications = !_settings.ShowNotifications;
-            SettingsManager.SaveSettings(_settings);
+            _settingsService.SaveSettings(_settings);
 
             UpdateMenuItemCheckState("Показывать уведомления", _settings.ShowNotifications);
             ShowNotification("Уведомления", _settings.ShowNotifications ? "Уведомления включены." : "Уведомления отключены.");
@@ -313,15 +329,15 @@ namespace BinBuddy.src.BinBuddy
 
         private static void ToggleAutoStart(object? _)
         {
-            bool enabled = !AutoStartManager.IsEnabled(); 
+            bool enabled = !_autoStartService.IsEnabled(); 
 
             if (enabled)
-                AutoStartManager.Enable(); 
+                _autoStartService.Enable(); 
             else
-                AutoStartManager.Disable(); 
+                _autoStartService.Disable(); 
 
             _settings.AutoStartEnabled = enabled;
-            SettingsManager.SaveSettings(_settings);
+            _settingsService.SaveSettings(_settings);
 
             UpdateMenuItemCheckState("Автозапуск", enabled);
             ShowNotification("Автозапуск", enabled ? "Автозапуск включен." : "Автозапуск отключен.");
@@ -330,9 +346,9 @@ namespace BinBuddy.src.BinBuddy
         private static void ToggleRecycleBinVisibility(object? _)
         {
             _settings.ShowRecycleBinOnDesktop = !_settings.ShowRecycleBinOnDesktop;
-            SettingsManager.SaveSettings(_settings);
+            _settingsService.SaveSettings(_settings);
 
-            RecycleBinVisibilityManager.SetRecycleBinVisibility(_settings.ShowRecycleBinOnDesktop);
+            _recycleBinVisibilityService.SetVisibility(_settings.ShowRecycleBinOnDesktop);
             UpdateMenuItemCheckState("Отображать 🗑️ на рабочем столе", _settings.ShowRecycleBinOnDesktop);
         }
 
@@ -370,12 +386,12 @@ namespace BinBuddy.src.BinBuddy
         {
             if (_trayIcon == null) return;
 
-            bool isRecycleBinEmpty = IsRecycleBinEmpty();
+            bool isRecycleBinEmpty = _recycleBinService.IsEmpty();
 
             if (isRecycleBinEmpty != _previousRecycleBinState)
             {
                 _previousRecycleBinState = isRecycleBinEmpty;
-                IconPackManager.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
+                _iconPackService.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
             }
 
             UpdateTrayText();
@@ -383,32 +399,8 @@ namespace BinBuddy.src.BinBuddy
 
         private static void UpdateTrayText()
         {
-            var rbInfo = GetRecycleBinInfo();
-            _trayIcon!.ToolTipText = $"Менеджер Корзины\nЭлементов: {rbInfo.i64NumItems}\nЗанято: {FormatFileSize(rbInfo.i64Size)}";
-        }
-
-        private static SHQUERYRBINFO GetRecycleBinInfo()
-        {
-            var rbInfo = new SHQUERYRBINFO { cbSize = (uint)Marshal.SizeOf<SHQUERYRBINFO>() };
-            SHQueryRecycleBin(null, ref rbInfo);
-            return rbInfo;
-        }
-
-        private static bool IsRecycleBinEmpty() => GetRecycleBinInfo().i64NumItems == 0;
-
-        private static string FormatFileSize(long sizeInBytes)
-        {
-            string[] sizes = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
-            double len = sizeInBytes;
-            int order = 0;
-
-            while (len >= 1024 && order < sizes.Length - 1)
-            {
-                order++;
-                len /= 1024;
-            }
-
-            return $"{len:0.##} {sizes[order]}";
+            var rbInfo = _recycleBinService.GetRecycleBinInfo();
+            _trayIcon!.ToolTipText = $"Менеджер Корзины\nЭлементов: {rbInfo.ItemCount}\nЗанято: {RecycleBinService.FormatFileSize(rbInfo.SizeInBytes)}";
         }
 
         private static void OpenRecycleBin()
@@ -418,9 +410,7 @@ namespace BinBuddy.src.BinBuddy
 
         private static void EmptyRecycleBin()
         {
-            const uint flags = 0x00000001 | 0x00000002 | 0x00000004; // NOCONFIRMATION | NOPROGRESSUI | NOSOUND
-
-            if (SHEmptyRecycleBin(IntPtr.Zero, null, flags) == 0)
+            if (_recycleBinService.Empty())
             {
                 ShowNotification("Корзина", "Корзина успешно очищена.");
                 UpdateTrayIcon();
@@ -439,7 +429,8 @@ namespace BinBuddy.src.BinBuddy
 
         private static void ExitApplication()
         {
-            IconPackManager.DisposeIcons();
+            _iconPackService?.Dispose();
+            _updateCheckService?.Dispose();
             _timer?.Stop();
             _timer?.Dispose();
             _trayIcon?.Dispose();
@@ -449,20 +440,6 @@ namespace BinBuddy.src.BinBuddy
         private static string GetVersion()
         {
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0";
-        }
-
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-        private static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, uint dwFlags);
-
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-        private static extern int SHQueryRecycleBin(string? pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct SHQUERYRBINFO
-        {
-            public uint cbSize;
-            public long i64Size;
-            public long i64NumItems;
         }
     }
 }
