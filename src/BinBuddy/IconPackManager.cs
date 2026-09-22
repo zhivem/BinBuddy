@@ -11,6 +11,11 @@ namespace BinBuddy.src.BinBuddy
 
         public static void ApplyIconPack(string packName, TrayIconHost trayIcon)
         {
+            ApplyIconPack(packName, trayIcon, IsRecycleBinEmpty());
+        }
+
+        public static void ApplyIconPack(string packName, TrayIconHost trayIcon, bool isEmpty)
+        {
             ArgumentNullException.ThrowIfNull(trayIcon);
 
             string emptyIconPath = GetIconPath(packName, "recycle-empty.ico");
@@ -28,7 +33,7 @@ namespace BinBuddy.src.BinBuddy
                 _fullIcon = new Icon(fullIconPath);
             }
 
-            trayIcon.Icon = (IsRecycleBinEmpty() ? _emptyIcon : _fullIcon).Handle;
+            trayIcon.Icon = (isEmpty ? _emptyIcon : _fullIcon).Handle;
             SaveCurrentPack(packName);
         }
 

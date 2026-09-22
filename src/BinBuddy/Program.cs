@@ -10,6 +10,7 @@ namespace BinBuddy.src.BinBuddy
         private static AppSettings _settings = null!;
         private static System.Windows.Forms.Timer? _timer;
         private static bool _previousRecycleBinState;
+        private static readonly uint RecycleBinInfoSize = (uint)Marshal.SizeOf<SHQUERYRBINFO>();
 
         [STAThread]
         public static void Main()
@@ -52,7 +53,7 @@ namespace BinBuddy.src.BinBuddy
         private static void ApplyInitialSettings()
         {
             var currentPack = IconPackManager.LoadCurrentPack();
-            IconPackManager.ApplyIconPack(currentPack, _trayIcon!);
+            IconPackManager.ApplyIconPack(currentPack, _trayIcon!, _previousRecycleBinState);
 
             if (!_settings.ShowRecycleBinOnDesktop)
                 RecycleBinVisibilityManager.HideRecycleBin();
@@ -227,8 +228,6 @@ namespace BinBuddy.src.BinBuddy
             if (_trayIcon == null) return;
 
             IconPackManager.ApplyIconPack(packName, _trayIcon);
-            bool isRecycleBinEmpty = IsRecycleBinEmpty();
-            IconPackManager.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
 
             foreach (var item in subMenu.OfType<TrayMenuItem>())
                 item.IsChecked = item.Header == packName;
@@ -370,7 +369,8 @@ namespace BinBuddy.src.BinBuddy
         {
             if (_trayIcon == null) return;
 
-            bool isRecycleBinEmpty = IsRecycleBinEmpty();
+            var recycleBinInfo = GetRecycleBinInfo();
+            bool isRecycleBinEmpty = recycleBinInfo.i64NumItems == 0;
 
             if (isRecycleBinEmpty != _previousRecycleBinState)
             {
@@ -378,18 +378,17 @@ namespace BinBuddy.src.BinBuddy
                 IconPackManager.UpdateIconsBasedOnState(_trayIcon, isRecycleBinEmpty);
             }
 
-            UpdateTrayText();
+            UpdateTrayText(recycleBinInfo);
         }
 
-        private static void UpdateTrayText()
+        private static void UpdateTrayText(SHQUERYRBINFO rbInfo)
         {
-            var rbInfo = GetRecycleBinInfo();
             _trayIcon!.ToolTipText = $"Менеджер Корзины\nЭлементов: {rbInfo.i64NumItems}\nЗанято: {FormatFileSize(rbInfo.i64Size)}";
         }
 
         private static SHQUERYRBINFO GetRecycleBinInfo()
         {
-            var rbInfo = new SHQUERYRBINFO { cbSize = (uint)Marshal.SizeOf<SHQUERYRBINFO>() };
+            var rbInfo = new SHQUERYRBINFO { cbSize = RecycleBinInfoSize };
             SHQueryRecycleBin(null, ref rbInfo);
             return rbInfo;
         }

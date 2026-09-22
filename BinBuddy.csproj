@@ -9,7 +9,7 @@
 		<LangVersion>14.0</LangVersion>
 
 		<PublishSingleFile>true</PublishSingleFile>
-		<SelfContained>true</SelfContained>
+		<SelfContained>false</SelfContained>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 
 		<PublishTrimmed>false</PublishTrimmed>
@@ -28,12 +28,12 @@
 		<NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
 		<SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 		<ApplicationIcon>src\BinBuddy\app.ico</ApplicationIcon>
-		<Version>1.4</Version>
+		<Version>1.5</Version>
 		<AssemblyName>BinBuddy</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="NativeTray" Version="2.0.3" />
+		<PackageReference Include="NativeTray" Version="2.2.0" />
 	</ItemGroup>
 
 	<!-- Копируем иконки из resources/icons в папку icons при сборке -->
